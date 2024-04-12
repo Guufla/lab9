@@ -12,8 +12,8 @@ struct RecordType
 // Fill out this structure
 struct HashType
 {
-	struct RecordType* array;
-	int size;
+	struct RecordType* item;
+	struct HashType* next;
 };
 
 // Compute the hash function
@@ -82,9 +82,23 @@ void displayRecordsInHash(struct HashType *pHashArray, int hashSz)
 	for (i=0;i<hashSz;++i)
 	{
 		// if index is occupied with any records, print all
-		if(pHashArray->array[i].id != 0){
-			printf("%d %c %d\n",pHashArray->array[i].id, pHashArray->array[i].name, pHashArray->array[i].order);
+
+		
+		
+        struct HashType *tmp = &pHashArray[i];
+
+		if(tmp->item == NULL){
+			continue;
 		}
+
+		printf("%d -> ", i);
+        while (tmp != NULL)
+        {
+            if (tmp->item != NULL)
+                printf("%d, %c, %d -> ", tmp->item->id, tmp->item->name, tmp->item->order);
+            tmp = tmp->next;
+        }
+        printf("NULL\n");
 	}
 }
 
@@ -100,23 +114,44 @@ int main(void)
 
 	// Your hash implementation
 
-	struct HashType* hashArray = (struct HashType*)malloc(sizeof(struct HashType));
-	hashArray->array = (struct RecordType*)malloc(sizeof(struct RecordType) * recordSz);
-	hashArray->size = recordSz;
+	int hashSz = 23; // assuming hash table size is 23
+    struct HashType *hashArray = (struct HashType *)malloc(sizeof(struct HashType) * hashSz);
 
-	for (int i = 0; i < hashArray->size; i++) {
-        hashArray->array[i].id = 0;  
+
+
+    for (int i = 0; i < hashSz; i++)
+    {
+        hashArray[i].item = NULL;
+        hashArray[i].next = NULL;
+    }
+
+
+    for (int i = 0; i < recordSz; i++)
+    {
+
+		struct HashType *newNode = (struct HashType *)malloc(sizeof(struct HashType));
+		newNode->item = (struct RecordType *)malloc(sizeof(struct RecordType));
+		newNode->item->id = pRecords[i].id;
+		newNode->item->name = pRecords[i].name;
+		newNode->item->order = pRecords[i].order;
+		newNode->next = NULL;
+
 		int hashValue = hash(pRecords[i].id);
+		struct HashType *tmp = &hashArray[hashValue];
 
-		struct RecordType tmp = hashArray->array[hashValue];
-
-		tmp.id = pRecords[i].id;
-		tmp.name = pRecords[i].name;
-		tmp.order = pRecords[i].order;
-
-		hashArray->array[hashValue] = tmp;
+		if (tmp->item == NULL) {
+			tmp->item = newNode->item;
+			tmp->next = NULL;
+		} else {
+			struct HashType *oldHead = tmp->next;
+			tmp->next = newNode;
+			newNode->next = oldHead;
+		}
 
     }
-	displayRecordsInHash(hashArray, hashArray->size);
+
+	
+    displayRecordsInHash(hashArray, hashSz);
+
 
 }
